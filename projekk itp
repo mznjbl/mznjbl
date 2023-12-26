@@ -1,0 +1,297 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_CUSTOMERS 100
+#define CUSTOMER_FILE "customers.txt"
+#define RENTAL_FILE "rentals.txt"
+
+typedef struct {
+    int id;
+    char name[50];
+    char location[20];
+    int MalaysianLicense;
+    int bookingCount;
+} Customer;
+
+typedef struct {
+    int carType;
+    int rentalDays;
+    int totalMileage;
+    double totalCharge;
+} CarRental;
+
+Customer customers[MAX_CUSTOMERS];
+int customerCount = 0;
+
+int createAccount();
+void viewAccount(int id);
+void editAccount(int id);
+void deleteAccount(int id);
+void SaveCustInfo();
+void loadCustomersFromFile();
+void calculateTotalCharge(Customer customer, CarRental carRental);
+
+int main() {
+    loadCustomersFromFile();
+
+    int choice, id;
+
+    while (1) {
+        printf("\nCar Rental and Customer Management System\n");
+        printf("1. Create Account\n");
+        printf("2. View Account\n");
+        printf("3. Edit Account\n");
+        printf("4. Delete Account\n");
+        printf("5. Rent a Car\n");
+        printf("6. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                id = createAccount();
+                printf("Account created successfully. Your customer ID is: %d\n", id);
+                SaveCustInfo();
+                break;
+            case 2:
+                printf("Enter your customer ID: ");
+                scanf("%d", &id);
+                viewAccount(id);
+                break;
+            case 3:
+                printf("Enter your customer ID: ");
+                scanf("%d", &id);
+                editAccount(id);
+                SaveCustInfo();
+                break;
+            case 4:
+                printf("Enter your customer ID: ");
+                scanf("%d", &id);
+                deleteAccount(id);
+                SaveCustInfo();
+                break;
+            case 5:
+                // Rent a car
+                Customer customer;
+                CarRental carRental;
+
+                printf("Enter customer ID for car rental: ");
+                scanf("%d", &id);
+
+                if (id <= 0 || id > customerCount) {
+                    printf("Invalid customer ID.\n");
+                    break;
+                }
+
+                customer = customers[id - 1];
+
+                printf("Enter car type (1 for Microcar, 2 for Saloon, 3 for Multipurpose, 4 for Motorcycle): ");
+                scanf("%d", &carRental.carType);
+
+                printf("Enter number of rental days: ");
+                scanf("%d", &carRental.rentalDays);
+
+                printf("Enter total mileage: ");
+                scanf("%d", &carRental.totalMileage);
+
+                printf("Does the customer have a Malaysian driving license? (1 for Yes, 0 for No): ");
+                scanf("%d", &customer.MalaysianLicense);
+
+                calculateTotalCharge(customer, carRental);
+                customer.bookingCount++; 
+                break;
+            case 6:
+                printf("Exiting program. Goodbye!\n");
+                SaveCustInfo();
+                exit(0);
+            default:
+                printf("Invalid choice. Please enter a valid option.\n");
+        }
+    }
+
+    return 0;
+}
+
+int createAccount() {
+    if (customerCount == MAX_CUSTOMERS) {
+        printf("Cannot create more accounts. Maximum limit reached.\n");
+        return -1;
+    }
+
+    Customer newCustomer;
+    newCustomer.id = customerCount + 1;
+    newCustomer.bookingCount = 0; // Initialize booking count
+
+    printf("Enter your name: ");
+    scanf("%s", newCustomer.name);
+
+    printf("Select your location (1: East Malaysia, 2: West Malaysia, 3: Overseas): ");
+    int locationChoice;
+    scanf("%d", &locationChoice);
+
+    switch (locationChoice) {
+        case 1:
+            strcpy(newCustomer.location, "East Malaysia");
+            break;
+        case 2:
+            strcpy(newCustomer.location, "West Malaysia");
+            break;
+        case 3:
+            strcpy(newCustomer.location, "Overseas");
+            break;
+        default:
+            printf("Invalid location choice. Please select a valid option.\n");
+            return -1;
+    }
+
+    customers[customerCount] = newCustomer;
+    customerCount++;
+
+    return newCustomer.id;
+}
+
+void viewAccount(int id) {
+    if (id <= 0 || id > customerCount) {
+        printf("Invalid customer ID.\n");
+        return;
+    }
+
+    Customer customer = customers[id - 1];
+    printf("\nCustomer Details\n");
+    printf("ID: %d\n", customer.id);
+    printf("Name: %s\n", customer.name);
+    printf("Location: %s\n", customer.location);
+    printf("Booking Count: %d\n", customer.bookingCount);
+}
+
+void editAccount(int id) {
+    if (id <= 0 || id > customerCount) {
+        printf("Invalid customer ID.\n");
+        return;
+    }
+
+    Customer *customer = &customers[id - 1];
+
+    printf("Editing Account (ID: %d)\n", customer->id);
+    printf("Current Name: %s\n", customer->name);
+    printf("Enter new name: ");
+    scanf("%s", customer->name);
+
+    printf("Current Location: %s\n", customer->location);
+    printf("Select new location (1: East Malaysia, 2: West Malaysia, 3: Overseas): ");
+    int locationChoice;
+    scanf("%d", &locationChoice);
+
+    switch (locationChoice) {
+        case 1:
+            strcpy(customer->location, "East Malaysia");
+            break;
+        case 2:
+            strcpy(customer->location, "West Malaysia");
+            break;
+        case 3:
+            strcpy(customer->location, "Overseas");
+            break;
+        default:
+            printf("Invalid location choice. Please select a valid option.\n");
+            return;
+    }
+
+    printf("Account updated successfully.\n");
+}
+
+void deleteAccount(int id) {
+    if (id <= 0 || id > customerCount) {
+        printf("Invalid customer ID.\n");
+        return;
+    }
+
+    for (int i = id - 1; i < customerCount - 1; ++i) {
+        customers[i] = customers[i + 1];
+    }
+
+    customerCount--;
+
+    printf("Account deleted successfully.\n");
+}
+
+void calculateTotalCharge(Customer customer, CarRental carRental) {
+    double dailyRate;
+
+    switch (carRental.carType) {
+        case 1:
+            dailyRate = 100;
+            break;
+        case 2:
+            dailyRate = 150;
+            break;
+        case 3:
+            dailyRate = 200;
+            break;
+        case 4:
+            dailyRate = 20;
+            break;
+        default:
+            printf("Invalid car type\n");
+            return;
+    }
+
+    double mileageSurcharge = (carRental.totalMileage <= 300)
+        ? dailyRate * 0.2
+        : dailyRate * 0.5;
+
+    double insuranceSurcharge = 0.0;
+
+    //letak saje
+    if (!customer.MalaysianLicense) {
+        if (carRental.carType == 2) {
+            insuranceSurcharge = dailyRate * 0.005;
+        } else if (carRental.carType == 3) {
+            insuranceSurcharge = dailyRate * 0.0075;
+        }
+    }
+
+    double totalChargeBeforeDiscount = (dailyRate + mileageSurcharge + insuranceSurcharge) * carRental.rentalDays;
+
+    // Apply discount di sini
+    if (customer.bookingCount > 3) {
+        double discount = totalChargeBeforeDiscount * 0.1;
+        carRental.totalCharge = totalChargeBeforeDiscount - discount;
+    } else {
+        carRental.totalCharge = totalChargeBeforeDiscount;
+    }
+
+    printf("Total charge for customer %s: RM %.2f\n", customer.name, carRental.totalCharge);
+}
+
+void SaveCustInfo() {
+    FILE *file = fopen(CUSTOMER_FILE, "w");
+
+    if (file == NULL) {
+        printf("Error opening file for writing.\n");
+        return;
+    }
+
+    for (int i = 0; i < customerCount; ++i) {
+        fprintf(file, "%d %s %s %d %d\n", customers[i].id, customers[i].name, customers[i].location, customers[i].MalaysianLicense, customers[i].bookingCount);
+    }
+
+    fclose(file);
+}
+
+void loadCustomersFromFile() {
+    FILE *file = fopen(CUSTOMER_FILE, "r");
+
+    if (file == NULL) {
+        printf("No existing customer data.\n");
+        return;
+    }
+
+    while (fscanf(file, "%d %s %s %d %d\n", &customers[customerCount].id, customers[customerCount].name,
+                  customers[customerCount].location, &customers[customerCount].MalaysianLicense, &customers[customerCount].bookingCount) == 5) {
+        customerCount++;
+    }
+
+    fclose(file);
+}
